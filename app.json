@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "RN Advanced TP-07",
+    "slug": "rn-advanced-tp-07",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "rnadv-tp07",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sparks.rnadvanced.tp07"
+    },
+    "android": {
+      "package": "com.sparks.rnadvanced.tp07"
+    },
+    "plugins": ["expo-router"]
+  }
+}
