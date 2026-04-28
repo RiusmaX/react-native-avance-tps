@@ -1,0 +1,23 @@
+{
+  "name": "03-backend-graphql",
+  "version": "1.0.0",
+  "description": "Backend GraphQL partagé pour les TP React Native Advanced",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "ts-node src/index.ts",
+    "dev": "ts-node --watch src/index.ts",
+    "seed": "ts-node src/seed.ts"
+  },
+  "dependencies": {
+    "graphql-yoga": "^5.3.0",
+    "graphql": "^16.8.0",
+    "better-sqlite3": "^9.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.0"
+  },
+  "private": true
+}
