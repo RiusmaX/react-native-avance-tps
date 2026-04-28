@@ -1,65 +1,53 @@
-# React Native Avancé — Projets de TP
+# TP-07 : Migration React Navigation → Expo Router
 
-**Formation Sparks / SQLi — Mai 2025**
+**Branche :** `tp-07-navigation-legacy`
+**Module :** M9 — Expo Router & Navigation Moderne
+**Durée :** 0h25
+**Niveau :** ⬡⬡⬡ Avancé
 
-Dépôt unique contenant les 7 Travaux Pratiques de la formation React Native Avancé.
+## Contexte
 
-## Structure
+App utilisant **React Navigation v6** (Stack + Bottom Tabs + guard d'auth).
+À migrer vers **Expo Router v3** (file-based routing).
+
+## Architecture de départ
 
 ```
-rn-advanced-tp-projects/
-├── main                    ← README + structure (vous êtes ici)
-├── tp-01-legacy-arch       ← TP-01 : Debugging Nouvelle Architecture
-├── tp-02-expo-modules      ← TP-02 : Bridging Natif & Expo Modules
-├── tp-03-tanstack-starter  ← TP-03 : Data Layer (TanStack Query + GraphQL)
-├── tp-04-tests-starter     ← TP-04 : Tests Avancés (MSW + Maestro)
-├── tp-05-legacy-code       ← TP-05 : IA & Refactoring Agentique
-├── tp-06-with-jank         ← TP-06 : Profiling & Correction de Jank
-└── tp-07-navigation-legacy ← TP-07 : Migration React Navigation → Expo Router
+AppNavigator (NativeStack)
+├── MainTabs (BottomTabNavigator)
+│   ├── Home       → HomeScreen
+│   └── Products   → ProductsScreen
+├── ProductDetail  → ProductDetailScreen (params: { productId })
+└── Login          → LoginScreen (modal)
 ```
 
-## Workflow
+## Architecture cible
 
-```bash
-# 1. Cloner le dépôt
-git clone https://github.com/sparks-formation/rn-advanced-tp-projects.git
-cd rn-advanced-tp-projects
-
-# 2. Pour chaque TP, switcher de branche
-git checkout tp-01-legacy-arch
-npm install
-# ... faire le TP ...
-
-# 3. Voir le corrigé
-git diff tp-01-legacy-arch solution/tp-01
-
-# 4. Passer au TP suivant
-git checkout tp-02-expo-modules
-npm install
-# ...
+```
+app/
+├── _layout.tsx           # Root Stack + guard auth
+├── (tabs)/
+│   ├── _layout.tsx       # Bottom Tab Layout
+│   ├── index.tsx         # HomeScreen
+│   └── products.tsx      # ProductsScreen
+├── product/
+│   └── [id].tsx          # Route dynamique
+└── login.tsx             # Login en modal
 ```
 
-## Les 7 TPs
+## 5 étapes
 
-| TP | Sujet | Durée | Niveau | Branche |
-|----|-------|-------|--------|---------|
-| 01 | Debugging Nouvelle Architecture | 1h00 | ⬡⬡ Intermédiaire | `tp-01-legacy-arch` |
-| 02 | Bridging Natif & Expo Modules | 0h45 | ⬡⬡⬡ Avancé | `tp-02-expo-modules` |
-| 03 | Data Layer (TanStack Query + GraphQL) | 0h30 | ⬡⬡ Intermédiaire | `tp-03-tanstack-starter` |
-| 04 | Tests Avancés (MSW + Maestro) | 0h30 | ⬡⬡ Intermédiaire | `tp-04-tests-starter` |
-| 05 | IA & Refactoring Agentique | 0h20 | ⬡ Tous niveaux | `tp-05-legacy-code` |
-| 06 | Profiling & Correction de Jank | 0h30 | ⬡⬡⬡ Avancé | `tp-06-with-jank` |
-| 07 | Migration React Navigation → Expo Router | 0h25 | ⬡⬡⬡ Avancé | `tp-07-navigation-legacy` |
+| Étape | Durée | Action |
+|-------|-------|--------|
+| 1 | 3 min | Installer `expo-router`, créer `app/`, configurer `scheme` |
+| 2 | 3 min | Créer `app/_layout.tsx` (Stack) |
+| 3 | 10 min | Créer `app/(tabs)/_layout.tsx` + fichiers écrans |
+| 4 | 5 min | Route dynamique `app/product/[id].tsx` |
+| 5 | 4 min | Guard auth : `useSegments` + `Redirect` |
 
-## Branches de solution
+## Points clés
 
-Les corrigés sont disponibles sur les branches `solution/tp-XX`. Utilisez `git diff` pour comparer votre code au corrigé :
-
-```bash
-git checkout tp-01-legacy-arch
-git diff solution/tp-01
-```
-
-## Licence
-
-Ce projet est fourni à titre pédagogique dans le cadre de la formation Sparks / SQLi.
+- `useLocalSearchParams` → `route.params`
+- `router.push`, `router.replace` → `navigation.navigate`
+- `useSegments` + `Redirect` → `AuthGuard` legacy
+- Deep link fonctionnel : `npx uri-scheme open rnadv-tp07://product/123`
