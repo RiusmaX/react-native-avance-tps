@@ -1,8 +1,5 @@
-// ❌ PROBLÈME 1 : Pas de React.memo — re-renders excessifs
-// Le composant se re-render à chaque changement du parent,
-// même si ses props n'ont pas changé.
-// Les callbacks sont recréés à chaque render (pas de useCallback).
-import React from 'react';
+// ✅ FIX 1 : React.memo + useCallback + interface TypeScript
+import React, { useCallback } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface Post {
@@ -14,20 +11,21 @@ interface Post {
   author: { name: string; avatar: string };
 }
 
-function PostCard({ post, onLike, onPress }: {
+interface PostCardProps {
   post: Post;
   onLike: (id: string) => void;
   onPress: (id: string) => void;
-}) {
-  // ❌ Nouvelle fonction à CHAQUE render
-  const handleLike = () => {
+}
+
+function PostCard({ post, onLike, onPress }: PostCardProps) {
+  const handleLike = useCallback(() => {
     console.log('Like:', post.id);
     onLike(post.id);
-  };
+  }, [post.id, onLike]);
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     onPress(post.id);
-  };
+  }, [post.id, onPress]);
 
   return (
     <TouchableOpacity style={styles.card} onPress={handlePress}>
@@ -50,31 +48,15 @@ function PostCard({ post, onLike, onPress }: {
   );
 }
 
-// ❌ React.memo absent — pas de mémoïsation
-export default PostCard;
+export default React.memo(PostCard);
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
+  card: { backgroundColor: '#fff', borderRadius: 12, marginHorizontal: 16, marginBottom: 12, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   thumbnail: { width: '100%', height: 180, backgroundColor: '#eee' },
   content: { padding: 12 },
   title: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
   excerpt: { fontSize: 14, color: '#666', lineHeight: 20 },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-  },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
   author: { flexDirection: 'row', alignItems: 'center' },
   avatar: { width: 28, height: 28, borderRadius: 14, marginRight: 8, backgroundColor: '#eee' },
   authorName: { fontSize: 13, color: '#333', fontWeight: '500' },

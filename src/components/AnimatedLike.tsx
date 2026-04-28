@@ -1,8 +1,7 @@
-// ❌ PROBLÈME 3 : Animation sur le JS thread avec Animated.timing
-// L'animation s'exécute sur le JS thread et bloque le scroll.
-// Devrait utiliser Reanimated 3 (UI thread).
+// ✅ FIX 3 : Animation sur le UI thread avec Reanimated 3
 import React, { useRef } from 'react';
-import { Animated, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS } from 'react-native-reanimated';
 
 interface AnimatedLikeProps {
   initialLikes: number;
@@ -10,33 +9,24 @@ interface AnimatedLikeProps {
 }
 
 function AnimatedLike({ initialLikes, onLike }: AnimatedLikeProps) {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
   const likes = useRef(initialLikes);
 
-  const handlePress = () => {
-    // ❌ Animated.timing avec useNativeDriver: false
-    // L'animation s'exécute sur le JS thread
-    // Pendant le scroll, ça cause du jank
-    Animated.sequence([
-      Animated.timing(scale, {
-        toValue: 1.5,
-        duration: 150,
-        useNativeDriver: false, // ❌ JS thread
-      }),
-      Animated.spring(scale, {
-        toValue: 1,
-        useNativeDriver: false, // ❌ JS thread
-        friction: 3,
-      }),
-    ]).start();
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
+  const handlePress = () => {
+    scale.value = withSpring(1.5, { duration: 150 }, () => {
+      scale.value = withSpring(1, { friction: 3 });
+    });
     likes.current += 1;
-    onLike();
+    runOnJS(onLike)();
   };
 
   return (
     <TouchableOpacity onPress={handlePress} style={styles.container}>
-      <Animated.View style={[styles.heart, { transform: [{ scale }] }]}>
+      <Animated.View style={[styles.heart, animatedStyle]}>
         <Text style={styles.icon}>❤️</Text>
       </Animated.View>
       <Text style={styles.count}>{likes.current}</Text>

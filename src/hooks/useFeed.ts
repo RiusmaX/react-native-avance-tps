@@ -1,9 +1,6 @@
-// ❌ PROBLÈME 4 : Subscription non nettoyée → fuite mémoire
-// EventEmitter.addListener sans cleanup dans useEffect.
-// Les listeners s'accumulent à chaque remount du composant.
+// ✅ FIX 4 : Subscription nettoyee -> plus de fuite memoire
 import { useState, useEffect } from 'react';
 
-// Simule un EventEmitter natif (comme NativeEventEmitter)
 const EventEmitter = {
   listeners: new Map<string, Set<(...args: any[]) => void>>(),
   addListener(event: string, handler: (...args: any[]) => void) {
@@ -18,12 +15,11 @@ const EventEmitter = {
   },
 };
 
-// 500 posts mockés
 function generateMockPosts(count: number) {
   return Array.from({ length: count }, (_, i) => ({
     id: `post-${i + 1}`,
     title: `Article ${i + 1} - Lorem ipsum dolor sit amet consectetur`,
-    excerpt: `Extrait de l'article ${i + 1}... Découvrez les dernières actualités.`,
+    excerpt: `Extrait de l'article ${i + 1}... Decouvrez les dernieres actualites.`,
     thumbnailUrl: `https://picsum.photos/seed/${i + 1}/400/300`,
     likes: Math.floor(Math.random() * 100),
     author: {
@@ -40,21 +36,18 @@ function useFeed() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    // ❌ addListener sans return de cleanup
-    // Quand le composant est démonté puis remonté,
-    // les listeners s'accumulent → fuite mémoire + re-renders fantômes
-    EventEmitter.addListener('newPost', (newPost: any) => {
+    const sub1 = EventEmitter.addListener('newPost', (newPost: any) => {
       setPosts((prev) => [newPost, ...prev]);
     });
-
-    EventEmitter.addListener('postUpdated', (updatedPost: any) => {
+    const sub2 = EventEmitter.addListener('postUpdated', (updatedPost: any) => {
       setPosts((prev) =>
         prev.map((p) => (p.id === updatedPost.id ? updatedPost : p))
       );
     });
-
-    // ❌ Pas de return () => { subscription.remove(); }
-    // Les listeners ne sont JAMAIS nettoyés
+    return () => {
+      sub1.remove();
+      sub2.remove();
+    };
   }, []);
 
   const refresh = async () => {

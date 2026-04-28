@@ -1,7 +1,5 @@
-// ❌ PROBLÈME 2 : Calcul lourd inline (pas de useMemo)
-// computeExpensiveStats est appelé à CHAQUE render,
-// même si `posts` n'a pas changé.
-import React from 'react';
+// ✅ FIX 2 : useMemo pour le calcul couteux + React.memo pour StatBadge
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 interface FeedStats {
@@ -13,14 +11,9 @@ interface FeedStats {
   engagementRate: number;
 }
 
-// Simulation d'un calcul coûteux
 function computeExpensiveStats(data: any[]): FeedStats {
   const start = performance.now();
-  while (performance.now() - start < 5) {
-    // Boucle synchrone qui bloque le JS thread pendant 5ms
-    // Sur 500 items, ça bloque le thread JS à chaque render
-  }
-
+  while (performance.now() - start < 5) {}
   return {
     totalPosts: data.length,
     totalLikes: data.reduce((sum: number, p: any) => sum + (p.likes || 0), 0),
@@ -34,12 +27,10 @@ function computeExpensiveStats(data: any[]): FeedStats {
 }
 
 function Header({ posts }: { posts: any[] }) {
-  // ❌ Appelé à CHAQUE render, même si posts est le même tableau
-  const stats = computeExpensiveStats(posts);
-
+  const stats = useMemo(() => computeExpensiveStats(posts), [posts]);
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Fil d'actualité</Text>
+      <Text style={styles.title}>Fil d'actualite</Text>
       <View style={styles.statsRow}>
         <StatBadge label="Posts" value={stats.totalPosts} />
         <StatBadge label="Likes" value={stats.totalLikes} />
@@ -50,17 +41,16 @@ function Header({ posts }: { posts: any[] }) {
   );
 }
 
-// ❌ Sous-composant sans React.memo non plus
-function StatBadge({ label, value }: { label: string; value: number | string }) {
+const StatBadge = React.memo(function StatBadge({ label, value }: { label: string; value: number | string }) {
   return (
     <View style={styles.badge}>
       <Text style={styles.badgeValue}>{value}</Text>
       <Text style={styles.badgeLabel}>{label}</Text>
     </View>
   );
-}
+});
 
-export default Header;
+export default React.memo(Header);
 
 const styles = StyleSheet.create({
   container: { backgroundColor: '#021023', padding: 16, paddingTop: 8 },
