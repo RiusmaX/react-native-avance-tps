@@ -1,3 +1,7 @@
+// @deprecated Utiliser apiHelper.ts (TypeScript) à la place
+// Ce fichier JS sera supprimé dans une prochaine version.
+// Les nouveaux appels API doivent utiliser TanStack Query.
+
 // ❌ Pas de TypeScript
 // ❌ Pas de typage des parametres/retours
 // ❌ Gestion d'erreur inconsistante

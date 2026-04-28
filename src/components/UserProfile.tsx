@@ -1,180 +1,115 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+/**
+ * UserProfile — Composant refactorisé
+ *
+ * ✅ Composant fonctionnel (plus de classe)
+ * ✅ TypeScript strict (plus de PropTypes)
+ * ✅ Logique métier extraite dans useUserProfile hook
+ * ✅ TanStack Query pour les appels API
+ * ✅ États loading/error/vide gérés
+ */
 
-// ❌ PropTypes au lieu de TypeScript
-// ❌ Composant classe
-// ❌ Logique metier + UI melanges
-// ❌ Appels API dans componentDidMount
-// ❌ Pas de hooks
-// ❌ Pas d'extraction de logique
+import React, { useCallback } from 'react';
+import {
+  View, Text, Image, StyleSheet, ActivityIndicator,
+  TouchableOpacity, ScrollView,
+} from 'react-native';
+import { useUserProfile } from '../hooks/useUserProfile';
 
-class UserProfile extends Component {
-  // ❌ PropTypes (pas TypeScript)
-  static propTypes = {
-    userId: PropTypes.string.isRequired,
-    onError: PropTypes.func,
-  };
+interface UserProfileProps {
+  userId: string;
+}
 
-  // ❌ any implicite
-  constructor(props) {
-    super(props);
-    this.state = {
-      user: null,
-      loading: true,
-      error: null,
-      // ❌ Etat duplique
-      posts: [],
-      postsLoading: false,
-      // ❌ Cache local fait main
-      lastFetch: null,
-    };
-  }
+export function UserProfile({ userId }: UserProfileProps) {
+  const { data: user, isLoading, isError, error, refetch, isFetching } = useUserProfile(userId);
 
-  // ❌ Logique de fetch dans le component
-  componentDidMount() {
-    this.fetchUserData();
-  }
+  const handleRetry = useCallback(() => { refetch(); }, [refetch]);
 
-  // ❌ componentDidUpdate pour re-fetch (pas de dependences claires)
-  componentDidUpdate(prevProps) {
-    if (prevProps.userId !== this.props.userId) {
-      this.fetchUserData();
-    }
-  }
-
-  // ❌ setState callback hell
-  fetchUserData() {
-    this.setState({ loading: true, error: null }, () => {
-      fetch('/api/user/' + this.props.userId)
-        .then((res) => {
-          if (!res.ok) throw new Error('Erreur chargement');
-          return res.json();
-        })
-        .then((data) => {
-          this.setState({ user: data, loading: false, lastFetch: Date.now() }, () => {
-            // ❌ Appel API imbrique
-            this.fetchUserPosts(data.id);
-          });
-        })
-        .catch((err) => {
-          this.setState({ error: err.message, loading: false }, () => {
-            if (this.props.onError) {
-              this.props.onError(err);
-            }
-          });
-        });
-    });
-  }
-
-  // ❌ Deuxieme methode de fetch separee
-  fetchUserPosts(userId) {
-    this.setState({ postsLoading: true }, () => {
-      fetch('/api/user/' + userId + '/posts')
-        .then((res) => res.json())
-        .then((data) => {
-          this.setState({ posts: data, postsLoading: false });
-        })
-        .catch(() => {
-          this.setState({ postsLoading: false });
-        });
-    });
-  }
-
-  // ❌ Logique metier dans le render (calcul inline)
-  formatJoinDate(dateStr) {
-    if (!dateStr) return 'Date inconnue';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-
-  render() {
-    const { user, loading, error, posts, postsLoading } = this.state;
-
-    if (loading) {
-      return (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#FF3000" />
-          <Text>Chargement du profil...</Text>
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View style={styles.center}>
-          <Text style={styles.error}>Erreur : {error}</Text>
-          <TouchableOpacity onPress={() => this.fetchUserData()}>
-            <Text style={styles.retry}>Reessayer</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    if (!user) return null;
-
-    // ❌ Tout est dans le meme render : profil + posts
+  if (isLoading) {
     return (
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Image source={{ uri: user.avatar }} style={styles.avatar} />
-          <View>
-            <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.email}>{user.email}</Text>
-            <Text style={styles.joinDate}>
-              Membre depuis {this.formatJoinDate(user.createdAt)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Bio */}
-        <Text style={styles.bio}>{user.bio}</Text>
-
-        {/* Posts */}
-        <Text style={styles.sectionTitle}>
-          Articles ({posts.length})
-        </Text>
-        {postsLoading ? (
-          <ActivityIndicator />
-        ) : (
-          posts.map((post) => (
-            <View key={post.id} style={styles.postCard}>
-              <Text style={styles.postTitle}>{post.title}</Text>
-              <Text style={styles.postExcerpt}>{post.excerpt}</Text>
-            </View>
-          ))
-        )}
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#FF3000" />
+        <Text style={styles.loadingText}>Chargement du profil…</Text>
       </View>
     );
   }
+
+  if (isError) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorIcon}>⚠️</Text>
+        <Text style={styles.errorTitle}>Erreur de chargement</Text>
+        <Text style={styles.errorMessage}>{error?.message}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleRetry} activeOpacity={0.7}>
+          <Text style={styles.retryText}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.emptyText}>Utilisateur introuvable</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.header}>
+        {user.avatar ? (
+          <Image source={{ uri: user.avatar }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, styles.avatarPlaceholder]}>
+            <Text style={styles.avatarInitial}>{user.name.charAt(0).toUpperCase()}</Text>
+          </View>
+        )}
+        <Text style={styles.name}>{user.name}</Text>
+        <Text style={styles.email}>{user.email}</Text>
+      </View>
+
+      {user.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
+
+      <View style={styles.statsRow}>
+        <View style={styles.stat}>
+          <Text style={styles.statValue}>{user.posts?.length ?? 0}</Text>
+          <Text style={styles.statLabel}>Articles</Text>
+        </View>
+        {user.joinDate ? (
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>
+              {new Date(user.joinDate).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })}
+            </Text>
+            <Text style={styles.statLabel}>Membre depuis</Text>
+          </View>
+        ) : null}
+      </View>
+    </ScrollView>
+  );
 }
 
-// ❌ Pas de theme, couleurs en dur
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  avatar: { width: 64, height: 64, borderRadius: 32, marginRight: 12, backgroundColor: '#eee' },
-  name: { fontSize: 20, fontWeight: '700' },
-  email: { fontSize: 14, color: '#666', marginTop: 2 },
-  joinDate: { fontSize: 12, color: '#999', marginTop: 2 },
-  bio: { fontSize: 14, lineHeight: 20, color: '#333', marginBottom: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12 },
-  postCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-  },
-  postTitle: { fontSize: 16, fontWeight: '600' },
-  postExcerpt: { fontSize: 13, color: '#666', marginTop: 4 },
-  error: { color: '#dc3545', fontSize: 16, marginBottom: 12 },
-  retry: { color: '#FF3000', fontSize: 16, fontWeight: '600' },
+  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  content: { padding: 20 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  loadingText: { marginTop: 12, fontSize: 15, color: '#6b7280' },
+  errorIcon: { fontSize: 48, marginBottom: 12 },
+  errorTitle: { fontSize: 17, fontWeight: '600', color: '#dc2626', marginBottom: 8 },
+  errorMessage: { fontSize: 13, color: '#9ca3af', textAlign: 'center', marginBottom: 20 },
+  retryButton: { backgroundColor: '#FF3000', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
+  retryText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  emptyText: { fontSize: 15, color: '#9ca3af' },
+  header: { alignItems: 'center', marginBottom: 24 },
+  avatar: { width: 96, height: 96, borderRadius: 48, marginBottom: 16 },
+  avatarPlaceholder: { backgroundColor: '#FF3000', justifyContent: 'center', alignItems: 'center' },
+  avatarInitial: { fontSize: 40, color: '#fff', fontWeight: '700' },
+  name: { fontSize: 24, fontWeight: '700', color: '#1a1a2e', marginBottom: 4 },
+  email: { fontSize: 15, color: '#6b7280' },
+  bio: { fontSize: 15, color: '#374151', textAlign: 'center', marginBottom: 24, lineHeight: 22 },
+  statsRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 16 },
+  stat: { alignItems: 'center', paddingHorizontal: 24 },
+  statValue: { fontSize: 28, fontWeight: '700', color: '#FF3000' },
+  statLabel: { fontSize: 13, color: '#6b7280', marginTop: 4 },
 });
 
 export default UserProfile;
