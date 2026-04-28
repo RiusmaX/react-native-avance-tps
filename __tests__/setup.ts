@@ -1,26 +1,35 @@
 import { setupServer } from 'msw/native';
 import { graphql, HttpResponse } from 'msw';
 
-// 🔲 TODO : Compléter les handlers MSW
-// Pour le moment, les handlers retournent des données vides.
-// À remplir par le participant pendant le TP.
+const mockPosts = [
+  {
+    id: '1',
+    title: 'Premier post de test',
+    excerpt: 'Ceci est un extrait de test pour vérifier le bon fonctionnement de MSW.',
+    body: 'Contenu complet du post de test.',
+    createdAt: '2025-05-01T10:00:00Z',
+    author: { id: 'u1', name: 'Alice Dupont', avatar: null },
+    tags: ['react', 'testing'],
+  },
+  {
+    id: '2',
+    title: 'Second post avec du contenu',
+    excerpt: 'Encore un extrait pour valider le rendu de la liste.',
+    body: 'Contenu du second post.',
+    createdAt: '2025-05-02T14:30:00Z',
+    author: { id: 'u2', name: 'Bob Martin', avatar: null },
+    tags: ['javascript', 'msw'],
+  },
+];
 
 export const server = setupServer(
-  // Handler pour la requête GetPosts
   graphql.query('GetPosts', () => {
-    // 🔲 TODO : retourner des posts de test
-    // Exemple :
-    // return HttpResponse.json({
-    //   data: {
-    //     posts: [
-    //       { id: '1', title: 'Post de test', excerpt: 'Contenu...', author: { name: 'Alice' }, tags: ['test'] },
-    //     ],
-    //   },
-    // });
-    return HttpResponse.json({ data: { posts: [] } });
+    return HttpResponse.json({
+      data: { posts: mockPosts },
+    });
   })
 );
 
-beforeAll(() => server.listen());
+beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());

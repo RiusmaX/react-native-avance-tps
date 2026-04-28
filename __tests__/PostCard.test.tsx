@@ -5,41 +5,58 @@ import PostsScreen from '../src/screens/PostsScreen';
 import { server } from './setup';
 import { graphql, HttpResponse } from 'msw';
 
-const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-    },
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
   });
+}
 
-// 🔲 TODO : Écrire les tests
-// Le participant doit implémenter ces tests pendant le TP.
+function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+  );
+}
 
 describe('PostsScreen', () => {
-  // 🔲 TODO : Test 1 - la liste des posts s'affiche après chargement
   it('affiche la liste des posts après chargement réussi', async () => {
-    // 1. Configurer le handler MSW pour retourner des données de test
-    // 2. Rendre PostsScreen dans un QueryClientProvider
-    // 3. Attendre que les posts apparaissent
-    // 4. Vérifier qu'un titre de post est visible
+    renderWithProviders(<PostsScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Premier post de test')).toBeTruthy();
+    });
+
+    expect(screen.getByText('Second post avec du contenu')).toBeTruthy();
+    expect(screen.getByText('Par Alice Dupont')).toBeTruthy();
+    expect(screen.getByText('Par Bob Martin')).toBeTruthy();
   });
 
-  // 🔲 TODO : Test 2 - message d'erreur si le serveur répond 500
   it("affiche un message d'erreur si le serveur répond 500", async () => {
-    // 1. Surcharger le handler MSW pour retourner une erreur
     server.use(
       graphql.query('GetPosts', () => {
-        return HttpResponse.json({
-          errors: [{ message: 'Internal Server Error' }],
-        });
+        return HttpResponse.json(
+          { errors: [{ message: 'Internal Server Error' }] },
+          { status: 500 }
+        );
       })
     );
-    // 2. Vérifier que le message d'erreur est affiché
+
+    renderWithProviders(<PostsScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Erreur de chargement')).toBeTruthy();
+    });
   });
 
-  // 🔲 TODO : Bonus - skeleton ou indicateur de chargement
-  it('affiche un indicateur pendant le chargement', async () => {
-    // 1. Retarder la réponse MSW pour voir l'état de chargement
-    // 2. Vérifier que l'ActivityIndicator est présent
+  it('affiche un indicateur de chargement pendant le fetch', async () => {
+    server.use(
+      graphql.query('GetPosts', () => {
+        return new Promise(() => {});
+      })
+    );
+
+    renderWithProviders(<PostsScreen />);
+
+    expect(screen.getByText('Chargement des posts…')).toBeTruthy();
   });
 });
