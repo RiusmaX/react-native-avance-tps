@@ -7,9 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-
-// 🔲 TODO TP-02 : Importer les fonctions du module device-info
-// import { getBatteryLevel, getDeviceModel, getThermalState } from '../modules/device-info';
+import { getBatteryLevel, getDeviceModel, getThermalState } from '../modules/device-info';
 
 interface DeviceInfo {
   batteryLevel: number | null;
@@ -29,20 +27,12 @@ export default function IndexScreen() {
   useEffect(() => {
     async function loadDeviceInfo() {
       try {
-        // 🔲 TODO : Décommenter après implémentation du module
-        // const [battery, model, thermal] = await Promise.all([
-        //   getBatteryLevel(),
-        //   Promise.resolve(getDeviceModel()),
-        //   getThermalState(),
-        // ]);
-        // setDeviceInfo({ batteryLevel: battery, deviceModel: model, thermalState: thermal });
-
-        // Simulation temporaire
-        setDeviceInfo({
-          batteryLevel: null,
-          deviceModel: null,
-          thermalState: null,
-        });
+        const [battery, model, thermal] = await Promise.all([
+          getBatteryLevel(),
+          Promise.resolve(getDeviceModel()),
+          getThermalState(),
+        ]);
+        setDeviceInfo({ batteryLevel: battery, deviceModel: model, thermalState: thermal });
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erreur inconnue');
@@ -76,66 +66,41 @@ export default function IndexScreen() {
       )}
 
       <View style={styles.cardsContainer}>
-        {/* 🔲 Batterie — à débloquer après implémentation du module */}
-        <View style={[styles.card, deviceInfo.batteryLevel === null && styles.cardEmpty]}>
-          {deviceInfo.batteryLevel !== null ? (
-            <>
-              <Text style={styles.cardIcon}>🔋</Text>
-              <Text style={styles.cardLabel}>Batterie</Text>
-              <Text style={styles.cardValue}>{deviceInfo.batteryLevel}%</Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.cardIcon}>🔲</Text>
-              <Text style={styles.cardLabel}>Batterie</Text>
-              <Text style={styles.cardTodo}>TODO : implémenter getBatteryLevel()</Text>
-            </>
-          )}
+        <View style={styles.card}>
+          <Text style={styles.cardIcon}>🔋</Text>
+          <Text style={styles.cardLabel}>Batterie</Text>
+          <Text style={styles.cardValue}>{deviceInfo.batteryLevel}%</Text>
         </View>
 
-        {/* 🔲 Modèle — à débloquer après implémentation du module */}
-        <View style={[styles.card, deviceInfo.deviceModel === null && styles.cardEmpty]}>
-          {deviceInfo.deviceModel !== null ? (
-            <>
-              <Text style={styles.cardIcon}>📱</Text>
-              <Text style={styles.cardLabel}>Modèle</Text>
-              <Text style={styles.cardValue}>{deviceInfo.deviceModel}</Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.cardIcon}>🔲</Text>
-              <Text style={styles.cardLabel}>Modèle</Text>
-              <Text style={styles.cardTodo}>TODO : implémenter getDeviceModel()</Text>
-            </>
-          )}
+        <View style={styles.card}>
+          <Text style={styles.cardIcon}>📱</Text>
+          <Text style={styles.cardLabel}>Modèle</Text>
+          <Text style={styles.cardValue}>{deviceInfo.deviceModel}</Text>
         </View>
 
-        {/* 🔲 Thermique — à débloquer après implémentation du module */}
-        <View style={[styles.card, deviceInfo.thermalState === null && styles.cardEmpty]}>
-          {deviceInfo.thermalState !== null ? (
-            <>
-              <Text style={styles.cardIcon}>🌡️</Text>
-              <Text style={styles.cardLabel}>État thermique</Text>
-              <Text style={styles.cardValue}>{deviceInfo.thermalState}</Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.cardIcon}>🔲</Text>
-              <Text style={styles.cardLabel}>État thermique</Text>
-              <Text style={styles.cardTodo}>TODO : implémenter getThermalState()</Text>
-            </>
-          )}
+        <View style={styles.card}>
+          <Text style={styles.cardIcon}>🌡️</Text>
+          <Text style={styles.cardLabel}>État thermique</Text>
+          <Text style={styles.cardValue}>{deviceInfo.thermalState}</Text>
         </View>
       </View>
 
       <View style={styles.instructions}>
-        <Text style={styles.instructionsTitle}>Instructions</Text>
+        <Text style={styles.instructionsTitle}>Solution TP-02</Text>
         <Text style={styles.instructionsText}>
-          1. Implémentez DeviceInfoModule.swift (iOS){'\n'}
-          2. Implémentez DeviceInfoModule.kt (Android){'\n'}
-          3. Complétez index.ts avec les exports{'\n'}
-          4. Activez le config plugin withDevicePermission{'\n'}
-          5. Décommentez les imports dans app/index.tsx
+          Module natif device-info implémenté :{'
+'}
+          ✅ DeviceInfoModule.swift (iOS){'
+'}
+          ✅ DeviceInfoModule.kt (Android){'
+'}
+          ✅ Bridge TypeScript (requireNativeModule){'
+'}
+          ✅ Exports publics (index.ts){'
+'}
+          ✅ Config plugin BATTERY_STATS{'
+'}
+          ✅ Intégration UI complète
         </Text>
       </View>
     </SafeAreaView>
@@ -178,12 +143,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  cardEmpty: {
-    opacity: 0.6,
-    borderWidth: 1,
-    borderColor: '#FF3000',
-    borderStyle: 'dashed',
-  },
   cardIcon: {
     fontSize: 32,
   },
@@ -197,11 +156,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#FF3000',
-  },
-  cardTodo: {
-    fontSize: 11,
-    color: '#FF3000',
-    fontStyle: 'italic',
   },
   errorCard: {
     margin: 16,

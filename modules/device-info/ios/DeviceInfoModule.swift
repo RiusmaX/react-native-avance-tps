@@ -1,30 +1,29 @@
-// TP-02 : DeviceInfoModule.swift
-// 🔲 TODO : Implémenter les 3 fonctions natives (iOS)
-//
-// Contexte :
-// - UIDevice.current.batteryLevel → Float (0.0–1.0), multiplier par 100
-// - UIDevice.current.model → String ("iPhone", "iPad", etc.)
-// - ProcessInfo.processInfo.thermalState → enum ThermalState
-//   .nominal, .fair, .serious, .critical
-//
-// Utiliser ExpoModulesCore pour exposer les fonctions.
-
-/*
 import ExpoModulesCore
+import UIKit
 
 public class DeviceInfoModule: Module {
   public func definition() -> ModuleDefinition {
     Name("DeviceInfo")
 
-    // 🔲 TODO : getBatteryLevel → AsyncFunction
-    // UIDevice.current.isBatteryMonitoringEnabled = true
-    // Retourner Int(UIDevice.current.batteryLevel * 100)
+    AsyncFunction("getBatteryLevel") { () -> Int in
+      UIDevice.current.isBatteryMonitoringEnabled = true
+      let level = UIDevice.current.batteryLevel
+      return Int((level >= 0 ? level : 1.0) * 100)
+    }
 
-    // 🔲 TODO : getDeviceModel → Function (synchrone, JSI)
-    // Retourner UIDevice.current.model
+    Function("getDeviceModel") { () -> String in
+      return UIDevice.current.model
+    }
 
-    // 🔲 TODO : getThermalState → AsyncFunction
-    // ProcessInfo.processInfo.thermalState → String
+    AsyncFunction("getThermalState") { () -> String in
+      let state = ProcessInfo.processInfo.thermalState
+      switch state {
+      case .nominal: return "nominal"
+      case .fair: return "fair"
+      case .serious: return "serious"
+      case .critical: return "critical"
+      @unknown default: return "nominal"
+      }
+    }
   }
 }
-*/
