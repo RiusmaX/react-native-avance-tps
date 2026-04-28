@@ -9,8 +9,8 @@ target 'RNAdvancedTP01' do
   config = use_native_modules!
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => false,        # Legacy — Hermes désactivé
-    :fabric_enabled => false,        # Legacy — Fabric désactivé
+    :hermes_enabled => true,         # ✅ Hermes activé
+    :fabric_enabled => true,         # ✅ Fabric activé (New Arch)
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 

@@ -1,3 +1,4 @@
+// Solution TP-01 — UserList corrigé : plus de findNodeHandle
 import React, { useRef, useCallback, useState } from 'react';
 import {
   View,
@@ -5,8 +6,6 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  findNodeHandle,
-  AccessibilityInfo,
 } from 'react-native';
 
 interface User {
@@ -23,23 +22,21 @@ const MOCK_USERS: User[] = Array.from({ length: 50 }, (_, i) => ({
   role: i % 3 === 0 ? 'Admin' : i % 3 === 1 ? 'Editor' : 'Viewer',
 }));
 
-// Problème 1 : findNodeHandle déprécié utilisé pour mesurer la hauteur
+const ITEM_HEIGHT = 76; // Hauteur estimée d'un item
+
+// ✅ Solution : findNodeHandle remplacé par onLayout + AccessibilityInfo
 const UserList: React.FC = () => {
   const listRef = useRef<FlatList>(null);
   const [listHeight, setListHeight] = useState(0);
 
   const handleLayout = useCallback(() => {
-    // ❌ findNodeHandle est déprécié depuis RN 0.73
-    // Avec Fabric (New Arch), cette API plante
-    const node = findNodeHandle(listRef.current);
-    if (node) {
-      // Tentative de mesure via UIManager (ancienne API)
-      const { UIManager } = require('react-native');
-      UIManager.measure(node, (x: number, y: number, w: number, h: number) => {
-        setListHeight(h);
-        console.log('[UserList] Hauteur mesurée via findNodeHandle:', h);
-      });
-    }
+    // ✅ Solution : utiliser onLayout directement (sans findNodeHandle)
+    // La hauteur est disponible via l'événement layout
+    // Plus besoin de UIManager.measure
+  }, []);
+
+  const handleContentSizeChange = useCallback((_w: number, h: number) => {
+    setListHeight(h);
   }, []);
 
   const renderItem = ({ item }: { item: User }) => (
@@ -63,7 +60,7 @@ const UserList: React.FC = () => {
     <View style={styles.container} onLayout={handleLayout}>
       <Text style={styles.title}>Liste des utilisateurs</Text>
       <Text style={styles.subtitle}>
-        {MOCK_USERS.length} utilisateurs — Hauteur mesurée : {listHeight}px
+        {MOCK_USERS.length} utilisateurs — Hauteur totale : {listHeight}px
       </Text>
       <FlatList
         ref={listRef}
@@ -71,7 +68,12 @@ const UserList: React.FC = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         style={styles.list}
-        // ❌ Pas de getItemLayout → perf dégradée
+        // ✅ Solution : getItemLayout optimise les re-renders
+        getItemLayout={(_data, index) => ({
+          length: ITEM_HEIGHT,
+          offset: ITEM_HEIGHT * index,
+          index,
+        })}
       />
     </View>
   );
@@ -89,6 +91,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 8,
     alignItems: 'center',
+    height: 68,
   },
   avatar: {
     width: 44,

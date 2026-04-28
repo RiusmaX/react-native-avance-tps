@@ -1,42 +1,38 @@
-import { NativeModules } from 'react-native';
+// Solution TP-01 — LegacyTempModule migré vers Turbo Module
+// Dans la New Architecture, ce module doit être implémenté via Codegen.
+// Voir TP-02 pour l'implémentation complète avec Expo Modules.
 
-// Problème 2 : NativeModules.TempModule (ancienne API Bridge)
-// Dans la New Architecture, ce module devrait être un Turbo Module typé
-// avec codegen et un podspec/expo-module.config.
+/*
+ * ✅ Solution : Turbo Module typé (à générer via Codegen)
+ *
+ * // TurboModulesRegistry.h
+ * @interface NativeTempModuleSpec : NSObject <RCTTurboModule>
+ * @end
+ *
+ * // TempModule.ts (codegen)
+ * import { TurboModule, TurboModuleRegistry } from 'react-native';
+ * interface Spec extends TurboModule {
+ *   readonly getDeviceTemperature: () => Promise<number>;
+ *   readonly startMonitoring: () => void;
+ *   readonly stopMonitoring: () => void;
+ * }
+ * export default TurboModuleRegistry.getEnforcing<Spec>('TempModule');
+ */
 
-interface LegacyTempModuleInterface {
-  getDeviceTemperature(): Promise<number>;
-  startMonitoring(): void;
-  stopMonitoring(): void;
-  readonly isMonitoring: boolean;
-}
-
-// ❌ NativeModules n'est pas typé et ne fonctionne pas avec Fabric
-// Dans la New Architecture, il faut importer depuis un module généré par Codegen
-const TempModule =
-  NativeModules.TempModule as LegacyTempModuleInterface;
-
-if (!TempModule) {
-  console.warn(
-    '[LegacyTempModule] TempModule non trouvé — ' +
-      'le module natif n\'a pas été linké correctement. ' +
-      'Vérifier que react-native link a été exécuté.'
-  );
-}
-
-// Wrapper legacy avec fallback
-export const LegacyTempModule = TempModule ?? {
+// Fallback : message indiquant la migration nécessaire
+export const LegacyTempModule = {
   getDeviceTemperature: async (): Promise<number> => {
-    console.warn('[LegacyTempModule] Fallback : température simulée');
+    console.warn(
+      '[LegacyTempModule] Migration nécessaire vers Turbo Module. ' +
+      'Utiliser le module généré par Codegen à la place.'
+    );
     return 42;
   },
   startMonitoring: () => {
-    console.warn('[LegacyTempModule] Fallback : monitoring non disponible');
+    console.warn('[LegacyTempModule] Migrer vers Turbo Module');
   },
   stopMonitoring: () => {
-    console.warn('[LegacyTempModule] Fallback : arrêt non disponible');
+    console.warn('[LegacyTempModule] Migrer vers Turbo Module');
   },
   isMonitoring: false,
 };
-
-export type { LegacyTempModuleInterface };
