@@ -1,0 +1,21 @@
+{
+  "name": "rn-advanced-tp-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "start": "ts-node src/index.ts",
+    "seed": "ts-node src/seed.ts"
+  },
+  "dependencies": {
+    "graphql-yoga": "^5.0.0",
+    "graphql": "^16.8.0",
+    "better-sqlite3": "^11.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0",
+    "@types/better-sqlite3": "^7.6.0"
+  }
+}

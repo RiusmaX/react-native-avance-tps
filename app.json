@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "RN Advanced TP-04",
+    "slug": "rn-advanced-tp-04",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sparks.rnadvanced.tp04"
+    },
+    "android": {
+      "package": "com.sparks.rnadvanced.tp04"
+    }
+  }
+}

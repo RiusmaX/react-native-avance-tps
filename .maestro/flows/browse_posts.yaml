@@ -1,0 +1,20 @@
+appId: com.sparks.rnadvanced.tp04
+---
+# 🔲 TODO : Écrire le flow Maestro
+# Scénario à couvrir :
+#   1. Lancer l'application
+#   2. Attendre que la liste de posts soit visible
+#   3. Scroller vers le bas (2-3 fois)
+#   4. Taper sur un post
+#   5. Vérifier que l'écran détail s'affiche
+#   6. Revenir en arrière
+#
+# Exemple de structure :
+#
+# - launchApp
+# - assertVisible: "Articles"
+# - scroll
+#   - direction: DOWN
+# - assertVisible: "Article de démonstration"
+# - tapOn: "Article de démonstration"
+# - assertVisible: "Détail"

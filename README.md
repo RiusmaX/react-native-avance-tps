@@ -1,65 +1,44 @@
-# React Native Avancé — Projets de TP
+# TP-04 : Tests Avancés — MSW + Maestro
 
-**Formation Sparks / SQLi — Mai 2025**
+**Branche :** `tp-04-tests-starter`
+**Module :** M6 — Tests Avancés
+**Durée :** 0h30 (2 × 15 min)
+**Niveau :** ⬡⬡ Intermédiaire
 
-Dépôt unique contenant les 7 Travaux Pratiques de la formation React Native Avancé.
+## Contexte
 
-## Structure
+Jest + RTL + MSW pré-configurés. À vous d'écrire les tests et le flow Maestro.
 
-```
-rn-advanced-tp-projects/
-├── main                    ← README + structure (vous êtes ici)
-├── tp-01-legacy-arch       ← TP-01 : Debugging Nouvelle Architecture
-├── tp-02-expo-modules      ← TP-02 : Bridging Natif & Expo Modules
-├── tp-03-tanstack-starter  ← TP-03 : Data Layer (TanStack Query + GraphQL)
-├── tp-04-tests-starter     ← TP-04 : Tests Avancés (MSW + Maestro)
-├── tp-05-legacy-code       ← TP-05 : IA & Refactoring Agentique
-├── tp-06-with-jank         ← TP-06 : Profiling & Correction de Jank
-└── tp-07-navigation-legacy ← TP-07 : Migration React Navigation → Expo Router
-```
-
-## Workflow
+## Partie A — MSW (15 min)
 
 ```bash
-# 1. Cloner le dépôt
-git clone https://github.com/sparks-formation/rn-advanced-tp-projects.git
-cd rn-advanced-tp-projects
-
-# 2. Pour chaque TP, switcher de branche
-git checkout tp-01-legacy-arch
 npm install
-# ... faire le TP ...
-
-# 3. Voir le corrigé
-git diff tp-01-legacy-arch solution/tp-01
-
-# 4. Passer au TP suivant
-git checkout tp-02-expo-modules
-npm install
-# ...
+npm test
 ```
 
-## Les 7 TPs
+**Tests à écrire dans `__tests__/PostCard.test.tsx` :**
+1. ✅ Chargement réussi : les posts s'affichent après réponse MSW
+2. ✅ Erreur 500 : le message d'erreur apparaît
+3. 🏆 Bonus : vérifier le skeleton pendant le chargement
 
-| TP | Sujet | Durée | Niveau | Branche |
-|----|-------|-------|--------|---------|
-| 01 | Debugging Nouvelle Architecture | 1h00 | ⬡⬡ Intermédiaire | `tp-01-legacy-arch` |
-| 02 | Bridging Natif & Expo Modules | 0h45 | ⬡⬡⬡ Avancé | `tp-02-expo-modules` |
-| 03 | Data Layer (TanStack Query + GraphQL) | 0h30 | ⬡⬡ Intermédiaire | `tp-03-tanstack-starter` |
-| 04 | Tests Avancés (MSW + Maestro) | 0h30 | ⬡⬡ Intermédiaire | `tp-04-tests-starter` |
-| 05 | IA & Refactoring Agentique | 0h20 | ⬡ Tous niveaux | `tp-05-legacy-code` |
-| 06 | Profiling & Correction de Jank | 0h30 | ⬡⬡⬡ Avancé | `tp-06-with-jank` |
-| 07 | Migration React Navigation → Expo Router | 0h25 | ⬡⬡⬡ Avancé | `tp-07-navigation-legacy` |
+**Handlers MSW à compléter dans `__tests__/setup.ts` :**
 
-## Branches de solution
-
-Les corrigés sont disponibles sur les branches `solution/tp-XX`. Utilisez `git diff` pour comparer votre code au corrigé :
+## Partie B — Maestro (15 min)
 
 ```bash
-git checkout tp-01-legacy-arch
-git diff solution/tp-01
+npx expo run:ios  # ou Android
+maestro test .maestro/flows/browse_posts.yaml
 ```
 
-## Licence
+**Flow à écrire dans `.maestro/flows/browse_posts.yaml` :**
+1. Lancer l'app
+2. Attendre la liste de posts
+3. Scroller
+4. Taper sur un post
 
-Ce projet est fourni à titre pédagogique dans le cadre de la formation Sparks / SQLi.
+## Backend
+
+```bash
+cd 03-backend-graphql
+npm install && npm run seed && npm start
+```
