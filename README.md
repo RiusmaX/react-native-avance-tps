@@ -1,65 +1,86 @@
-# React Native Avancé — Projets de TP
+# TP-03 : Data Layer (TanStack Query + GraphQL)
 
-**Formation Sparks / SQLi — Mai 2025**
+**Branche :** `tp-03-tanstack-starter`
+**Module :** M5 — Data Layer Moderne
+**Durée :** 0h30
+**Niveau :** ⬡⬡ Intermédiaire
 
-Dépôt unique contenant les 7 Travaux Pratiques de la formation React Native Avancé.
+## Objectif
 
-## Structure
+Connecter une app React Native au backend GraphQL fourni en utilisant **TanStack Query v5** et **graphql-request**, avec pagination infinie, mutation et invalidation de cache.
+
+## Architecture cible
 
 ```
-rn-advanced-tp-projects/
-├── main                    ← README + structure (vous êtes ici)
-├── tp-01-legacy-arch       ← TP-01 : Debugging Nouvelle Architecture
-├── tp-02-expo-modules      ← TP-02 : Bridging Natif & Expo Modules
-├── tp-03-tanstack-starter  ← TP-03 : Data Layer (TanStack Query + GraphQL)
-├── tp-04-tests-starter     ← TP-04 : Tests Avancés (MSW + Maestro)
-├── tp-05-legacy-code       ← TP-05 : IA & Refactoring Agentique
-├── tp-06-with-jank         ← TP-06 : Profiling & Correction de Jank
-└── tp-07-navigation-legacy ← TP-07 : Migration React Navigation → Expo Router
+src/
+├── data/
+│   ├── graphql/
+│   │   ├── client.ts            # GraphQLClient
+│   │   └── queries/
+│   │       ├── posts.ts         # GET_POSTS, GET_POST, CREATE_POST...
+│   │       └── users.ts         # GET_USERS, GET_USER...
+│   └── hooks/
+│       ├── usePosts.ts          # useInfiniteQuery
+│       ├── usePost.ts           # useQuery
+│       └── useCreatePost.ts     # useMutation
+├── domain/
+│   ├── models/
+│   │   ├── Post.ts              # ✅ Déjà fourni
+│   │   └── User.ts              # ✅ Déjà fourni
+│   └── transformers/
+│       └── postTransformer.ts   # 🔲 À implémenter
+└── ui/
+    ├── components/
+    │   └── PostCard.tsx         # ✅ Déjà fourni
+    └── screens/
+        └── PostsScreen.tsx      # 🔲 À compléter (FlatList + pagination)
 ```
 
-## Workflow
+## Prérequis : démarrer le backend
 
 ```bash
-# 1. Cloner le dépôt
-git clone https://github.com/sparks-formation/rn-advanced-tp-projects.git
-cd rn-advanced-tp-projects
-
-# 2. Pour chaque TP, switcher de branche
-git checkout tp-01-legacy-arch
+cd 03-backend-graphql
 npm install
-# ... faire le TP ...
-
-# 3. Voir le corrigé
-git diff tp-01-legacy-arch solution/tp-01
-
-# 4. Passer au TP suivant
-git checkout tp-02-expo-modules
-npm install
-# ...
+npm run seed       # 500 users + 5000 posts dans SQLite
+npm start          # http://localhost:4000/graphql
 ```
 
-## Les 7 TPs
-
-| TP | Sujet | Durée | Niveau | Branche |
-|----|-------|-------|--------|---------|
-| 01 | Debugging Nouvelle Architecture | 1h00 | ⬡⬡ Intermédiaire | `tp-01-legacy-arch` |
-| 02 | Bridging Natif & Expo Modules | 0h45 | ⬡⬡⬡ Avancé | `tp-02-expo-modules` |
-| 03 | Data Layer (TanStack Query + GraphQL) | 0h30 | ⬡⬡ Intermédiaire | `tp-03-tanstack-starter` |
-| 04 | Tests Avancés (MSW + Maestro) | 0h30 | ⬡⬡ Intermédiaire | `tp-04-tests-starter` |
-| 05 | IA & Refactoring Agentique | 0h20 | ⬡ Tous niveaux | `tp-05-legacy-code` |
-| 06 | Profiling & Correction de Jank | 0h30 | ⬡⬡⬡ Avancé | `tp-06-with-jank` |
-| 07 | Migration React Navigation → Expo Router | 0h25 | ⬡⬡⬡ Avancé | `tp-07-navigation-legacy` |
-
-## Branches de solution
-
-Les corrigés sont disponibles sur les branches `solution/tp-XX`. Utilisez `git diff` pour comparer votre code au corrigé :
+## Lancer l'app
 
 ```bash
-git checkout tp-01-legacy-arch
-git diff solution/tp-01
+npm install
+npx expo start
 ```
 
-## Licence
+## Étapes
 
-Ce projet est fourni à titre pédagogique dans le cadre de la formation Sparks / SQLi.
+| # | Tâche | Fichier | Durée |
+|---|-------|---------|-------|
+| 1 | Configurer `staleTime` et `gcTime` du QueryClient | `App.tsx` | 2 min |
+| 2 | Écrire les requêtes GraphQL (GET_POSTS avec fragment, GET_POST, CREATE_POST) | `src/data/graphql/queries/posts.ts` | 5 min |
+| 3 | Implémenter `transformGQLPostToPost(s)` | `src/domain/transformers/postTransformer.ts` | 3 min |
+| 4 | Implémenter `usePosts` avec `useInfiniteQuery` (pagination par offset) | `src/data/hooks/usePosts.ts` | 8 min |
+| 5 | Brancher `PostsScreen` sur `usePosts` (FlatList + onEndReached + pull-to-refresh) | `src/ui/screens/PostsScreen.tsx` | 7 min |
+| 6 | Implémenter `useCreatePost` avec invalidation du cache | `src/data/hooks/useCreatePost.ts` | 5 min |
+| 🏆 | **Bonus** : Optimistic update sur la création de post | `useCreatePost.ts` | +5 min |
+
+## Livrable attendu
+
+- ✅ Liste paginée qui se charge depuis le backend GraphQL
+- ✅ Scroll infini fonctionnel (chargement par page de 20)
+- ✅ Pull-to-refresh
+- ✅ Création d'un post → la liste se rafraîchit automatiquement
+- 🏆 (Bonus) Le post optimiste apparaît avant la confirmation serveur, rollback si erreur
+
+## Points clés
+
+- **`useInfiniteQuery` ≠ `useQuery`** : la donnée est une `{ pages, pageParams }`, pas un tableau plat → utiliser `select` pour aplatir
+- **`getNextPageParam`** : retourner `undefined` arrête le scroll infini
+- **`invalidateQueries`** ne refetch QUE les queries actuellement montées
+- **Fragment GraphQL** : limite la duplication des champs entre queries
+
+## Voir le corrigé
+
+```bash
+git diff tp-03-tanstack-starter solution/tp-03
+```
