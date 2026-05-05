@@ -1,32 +1,80 @@
-# TP-05 : IA & Refactoring Agentique
+# TP-07 : Migration React Navigation → Expo Router — CORRIGÉ
 
-**Branche :** tp-05-legacy-code
-**Module :** M7 - IA & Developpement Agentique
-**Duree :** 0h20
-**Niveau :** Tous niveaux
+**Branche :** `solution/tp-07`
+**Module :** M9 — Expo Router & Navigation Moderne
+**Durée :** 0h25
+**Niveau :** ⬡⬡⬡ Avancé
 
-## Contexte
+## Ce que contient le corrigé
 
-Un composant classe legacy de ~120 lignes a refactoriser.
-Utilisez l'outil IA de votre choix (Claude Code, Cursor, Copilot).
+### Architecture Expo Router
 
-## Probleme
+```
+app/
+├── _layout.tsx           # Stack racine + AuthProvider + guard via useSegments
+├── (tabs)/
+│   ├── _layout.tsx       # Bottom Tab Layout (Home + Products)
+│   ├── index.tsx         # ex-HomeScreen
+│   └── products.tsx      # ex-ProductsScreen (FlatList de produits)
+├── product/
+│   └── [id].tsx          # Route dynamique → useLocalSearchParams
+└── login.tsx             # Modal de login (presentation: 'modal')
+```
 
-Le composant UserProfile.tsx contient :
-- Composant classe au lieu de fonctionnel
-- PropTypes au lieu de TypeScript
-- Logique metier melangee a l'UI
-- Appels API directs (pas TanStack Query)
-- Pas de tests
+### Code conservé du starter (toujours dans src/)
 
-## Mission
+- `src/context/AuthContext.tsx` — Provider d'authentification (inchangé)
+- `src/hooks/useAuth.ts` — Hook consumer
 
-Donnez cette instruction a votre agent :
+### Code retiré
 
-"Refactorise UserProfile.tsx : convertis en composant fonctionnel,
-extrais la logique dans useUserProfile(userId) avec TanStack Query,
-ajoute TypeScript strict, genere un test Jest + RTL."
+- `src/navigation/` — remplacé entièrement par les fichiers `app/`
+- `src/components/AuthGuard.tsx` — la logique passe dans `app/_layout.tsx`
+- `src/screens/` — chaque écran déplacé dans `app/`
 
-## Bonus
+## Mappings clés
 
-Creer .claude/CLAUDE.md avec les regles projet et relancer.
+| React Navigation v6 | Expo Router v4 |
+|---------------------|-----------------|
+| `NavigationContainer` | `<Slot />` ou `<Stack />` racine dans `app/_layout.tsx` |
+| `Stack.Navigator` + `Stack.Screen` | Convention de fichiers dans `app/` |
+| `BottomTabNavigator` | Dossier `app/(tabs)/` + `_layout.tsx` |
+| `route.params.productId` | `useLocalSearchParams<{ id: string }>()` |
+| `navigation.navigate('Login')` | `router.push('/login')` |
+| `presentation: 'modal'` | `<Stack.Screen options={{ presentation: 'modal' }} />` |
+| `AuthGuard` (composant englobant) | `useSegments` + `<Redirect />` dans `_layout` |
+
+## Lancer le TP
+
+```bash
+npm install
+npx expo start
+```
+
+Tester le deep link :
+
+```bash
+npx uri-scheme open rnadv-tp07://product/42 --android
+# ou --ios
+```
+
+## Diff vs starter
+
+```bash
+git diff tp-07-navigation-legacy solution/tp-07
+```
+
+## Points pédagogiques clés
+
+1. **Convention > config** : Expo Router déduit les routes des fichiers, plus de tableau `screens`
+2. **Layouts imbriqués** : un `_layout.tsx` par dossier, hérité par les enfants
+3. **`useSegments`** : permet d'écrire un guard d'auth contextuel (dans/hors `(tabs)`)
+4. **Routes dynamiques** : `[id].tsx` + `useLocalSearchParams` (typé avec generics)
+5. **Coexistence possible** : on peut migrer écran par écran en gardant `react-navigation` pendant la transition
+
+## Erreurs courantes pendant la migration
+
+- ❌ Oublier `expo-linking` dans les deps → deep link cassé
+- ❌ Mettre `App.tsx` au lieu de utiliser `expo-router/entry` dans `package.json#main`
+- ❌ Faire le guard d'auth au niveau du Tab Layout au lieu du root → flash d'écran
+- ❌ Utiliser `router.push` dans un `useEffect` synchrone → warning React
