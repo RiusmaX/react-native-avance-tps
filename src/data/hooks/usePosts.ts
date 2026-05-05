@@ -4,50 +4,51 @@ import { GET_POSTS } from '../graphql/queries/posts';
 import { Post } from '../../domain/models/Post';
 import { transformGQLPostsToPosts } from '../../domain/transformers/postTransformer';
 
-// 🔲 TODO : Implémenter usePosts avec useInfiniteQuery
-// - Fonction fetchPosts qui appelle gqlClient.request
-// - Pagination avec limit/offset (ou cursor-based)
-// - Transformation des données via postTransformer
-// - Filtrage optionnel par tag
-
 interface UsePostsOptions {
   tag?: string;
   limit?: number;
 }
 
-interface PostsResponse {
+interface PostsPage {
   posts: {
-    items: any[];
+    items: unknown[];
     total: number;
     hasMore: boolean;
   };
 }
 
-export function usePosts({ tag, limit = 10 }: UsePostsOptions = {}) {
-  return useInfiniteQuery<PostsResponse>({
-    queryKey: ['posts', { tag }],
+/**
+ * ✅ Hook de pagination infinie sur les posts.
+ *
+ * - clé de cache : ['posts', { tag }]
+ * - pageParam = offset (incrémenté de `limit` à chaque page)
+ * - getNextPageParam : retourne `undefined` quand `hasMore = false`
+ *   (TanStack Query arrête alors le scroll infini)
+ * - select : applique le transformer GQL → modèle métier
+ */
+export function usePosts({ tag, limit = 20 }: UsePostsOptions = {}) {
+  return useInfiniteQuery({
+    queryKey: ['posts', { tag }] as const,
     queryFn: async ({ pageParam }) => {
-      // 🔲 TODO : Implémenter l'appel GraphQL avec pagination
-      // const data = await gqlClient.request(GET_POSTS, {
-      //   limit,
-      //   offset: pageParam,
-      //   tag: tag || undefined,
-      // });
-      // return data;
-      throw new Error('TODO : implémenter usePosts');
+      const data = await gqlClient.request<PostsPage>(GET_POSTS, {
+        limit,
+        offset: pageParam,
+        tag: tag || undefined,
+      });
+      return data;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      // 🔲 TODO : Calculer le prochain offset
-      // return lastPage.posts.hasMore ? allPages.length * limit : undefined;
-      return undefined;
+      if (!lastPage.posts.hasMore) return undefined;
+      return allPages.length * limit;
     },
-    select: (data) => ({
-      pages: data.pages.map((page) => ({
-        ...page,
-        items: transformGQLPostsToPosts(page.posts?.items || []),
-      })),
-      pageParams: data.pageParams,
-    }),
+    select: (data): { items: Post[]; total: number } => {
+      const items = data.pages.flatMap((p) =>
+        transformGQLPostsToPosts(p.posts.items)
+      );
+      const total = data.pages[data.pages.length - 1]?.posts.total ?? 0;
+      return { items, total };
+    },
+    staleTime: 1000 * 60 * 5,  // 5 min — évite refetch inutile au remount
   });
 }

@@ -1,28 +1,69 @@
 import { gql } from 'graphql-request';
 
-// 🔲 TODO : Écrire les requêtes GraphQL
-// - GET_POSTS : posts avec pagination (limit, offset, tag)
-// - GET_POST : post par id
-// - CREATE_POST : mutation createPost
-// - UPDATE_POST : mutation updatePost
-// - DELETE_POST : mutation deletePost
+// ✅ Fragment réutilisable
+export const POST_FIELDS = gql`
+  fragment PostFields on Post {
+    id
+    title
+    excerpt
+    body
+    createdAt
+    tags
+    author {
+      id
+      name
+      avatar
+    }
+  }
+`;
 
+// ✅ Liste paginée — variables limit / offset / tag
 export const GET_POSTS = gql`
-  # TODO: query Posts($limit: Int, $offset: Int, $tag: String) { ... }
+  ${POST_FIELDS}
+  query Posts($limit: Int, $offset: Int, $tag: String) {
+    posts(limit: $limit, offset: $offset, tag: $tag) {
+      items {
+        ...PostFields
+      }
+      total
+      hasMore
+    }
+  }
 `;
 
+// ✅ Post unique
 export const GET_POST = gql`
-  # TODO: query Post($id: ID!) { ... }
+  ${POST_FIELDS}
+  query Post($id: ID!) {
+    post(id: $id) {
+      ...PostFields
+    }
+  }
 `;
 
+// ✅ Mutation création
 export const CREATE_POST = gql`
-  # TODO: mutation CreatePost($input: CreatePostInput!) { ... }
+  ${POST_FIELDS}
+  mutation CreatePost($input: CreatePostInput!) {
+    createPost(input: $input) {
+      ...PostFields
+    }
+  }
 `;
 
+// ✅ Mutation mise à jour
 export const UPDATE_POST = gql`
-  # TODO: mutation UpdatePost($id: ID!, $input: UpdatePostInput!) { ... }
+  ${POST_FIELDS}
+  mutation UpdatePost($id: ID!, $input: UpdatePostInput!) {
+    updatePost(id: $id, input: $input) {
+      ...PostFields
+    }
+  }
 `;
 
+// ✅ Mutation suppression
 export const DELETE_POST = gql`
-  # TODO: mutation DeletePost($id: ID!) { ... }
+  mutation DeletePost($id: ID!) {
+    deletePost(id: $id)
+  }
 `;

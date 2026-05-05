@@ -1,86 +1,63 @@
-# TP-03 : Data Layer (TanStack Query + GraphQL)
+# TP-03 : Data Layer (TanStack Query + GraphQL) — CORRIGÉ
 
-**Branche :** `tp-03-tanstack-starter`
+**Branche :** `solution/tp-03`
 **Module :** M5 — Data Layer Moderne
 **Durée :** 0h30
 **Niveau :** ⬡⬡ Intermédiaire
 
-## Objectif
+## Ce que contient le corrigé
 
-Connecter une app React Native au backend GraphQL fourni en utilisant **TanStack Query v5** et **graphql-request**, avec pagination infinie, mutation et invalidation de cache.
+### Hooks TanStack Query implémentés
 
-## Architecture cible
+- `usePosts({ tag, limit })` — `useInfiniteQuery` avec pagination par offset, transformer GQL→domaine, `staleTime` 5 min
+- `usePost(id)` — `useQuery` avec `enabled: !!id`, gestion du post introuvable
+- `useCreatePost()` — `useMutation` + **optimistic update + rollback** (bonus)
 
-```
-src/
-├── data/
-│   ├── graphql/
-│   │   ├── client.ts            # GraphQLClient
-│   │   └── queries/
-│   │       ├── posts.ts         # GET_POSTS, GET_POST, CREATE_POST...
-│   │       └── users.ts         # GET_USERS, GET_USER...
-│   └── hooks/
-│       ├── usePosts.ts          # useInfiniteQuery
-│       ├── usePost.ts           # useQuery
-│       └── useCreatePost.ts     # useMutation
-├── domain/
-│   ├── models/
-│   │   ├── Post.ts              # ✅ Déjà fourni
-│   │   └── User.ts              # ✅ Déjà fourni
-│   └── transformers/
-│       └── postTransformer.ts   # 🔲 À implémenter
-└── ui/
-    ├── components/
-    │   └── PostCard.tsx         # ✅ Déjà fourni
-    └── screens/
-        └── PostsScreen.tsx      # 🔲 À compléter (FlatList + pagination)
-```
+### GraphQL
 
-## Prérequis : démarrer le backend
+- Fragment `PostFields` réutilisé par `GET_POSTS`, `GET_POST`, `CREATE_POST`, `UPDATE_POST`
+- Queries users (`GET_USERS`, `GET_USER`, `GET_USER_POSTS`) prêtes à l'emploi
+
+### Domain layer
+
+- `transformGQLPostToPost` / `transformGQLPostsToPosts` : isolent le schéma GQL du domaine, résilients aux données partielles
+
+### UI
+
+- `PostsScreen` : FlatList paginée + pull-to-refresh + footer loader + gestion d'erreur
+- Callbacks stabilisés avec `useCallback` pour éviter les re-renders du `PostCard`
+
+## Lancer le TP
 
 ```bash
+# 1. Backend GraphQL
 cd 03-backend-graphql
 npm install
-npm run seed       # 500 users + 5000 posts dans SQLite
+npm run seed
 npm start          # http://localhost:4000/graphql
-```
 
-## Lancer l'app
-
-```bash
+# 2. App
+cd ..
 npm install
 npx expo start
 ```
 
-## Étapes
-
-| # | Tâche | Fichier | Durée |
-|---|-------|---------|-------|
-| 1 | Configurer `staleTime` et `gcTime` du QueryClient | `App.tsx` | 2 min |
-| 2 | Écrire les requêtes GraphQL (GET_POSTS avec fragment, GET_POST, CREATE_POST) | `src/data/graphql/queries/posts.ts` | 5 min |
-| 3 | Implémenter `transformGQLPostToPost(s)` | `src/domain/transformers/postTransformer.ts` | 3 min |
-| 4 | Implémenter `usePosts` avec `useInfiniteQuery` (pagination par offset) | `src/data/hooks/usePosts.ts` | 8 min |
-| 5 | Brancher `PostsScreen` sur `usePosts` (FlatList + onEndReached + pull-to-refresh) | `src/ui/screens/PostsScreen.tsx` | 7 min |
-| 6 | Implémenter `useCreatePost` avec invalidation du cache | `src/data/hooks/useCreatePost.ts` | 5 min |
-| 🏆 | **Bonus** : Optimistic update sur la création de post | `useCreatePost.ts` | +5 min |
-
-## Livrable attendu
-
-- ✅ Liste paginée qui se charge depuis le backend GraphQL
-- ✅ Scroll infini fonctionnel (chargement par page de 20)
-- ✅ Pull-to-refresh
-- ✅ Création d'un post → la liste se rafraîchit automatiquement
-- 🏆 (Bonus) Le post optimiste apparaît avant la confirmation serveur, rollback si erreur
-
-## Points clés
-
-- **`useInfiniteQuery` ≠ `useQuery`** : la donnée est une `{ pages, pageParams }`, pas un tableau plat → utiliser `select` pour aplatir
-- **`getNextPageParam`** : retourner `undefined` arrête le scroll infini
-- **`invalidateQueries`** ne refetch QUE les queries actuellement montées
-- **Fragment GraphQL** : limite la duplication des champs entre queries
-
-## Voir le corrigé
+## Diff vs starter
 
 ```bash
-git diff tp-03-tanstack-starter solution/tp-03
+git diff tp-03-tanstack-starter solution/tp-03 -- src/
 ```
+
+## Points pédagogiques clés à retenir
+
+1. **`useInfiniteQuery` ≠ `useQuery`** : retourne `{ pages, pageParams }`, pas un tableau plat
+2. **`select`** : transforme la donnée AVANT qu'elle atteigne le composant — idéal pour les transformers
+3. **`getNextPageParam`** : retourner `undefined` arrête le scroll infini (≠ `null`)
+4. **Optimistic update** : 4 callbacks (`onMutate`, `onError`, `onSettled`, `onSuccess`) + snapshot pour rollback
+5. **`invalidateQueries`** : ne refetch QUE les queries actuellement montées (les autres sont marquées stale)
+
+## Bonus — Aller plus loin
+
+- Persister le cache avec `@tanstack/react-query-persist-client` + `AsyncStorage`
+- DevTools : `@tanstack/react-query-devtools` (web seulement)
+- Suspense mode : `useSuspenseQuery` (React 18+)
