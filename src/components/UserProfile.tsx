@@ -1,165 +1,98 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { View, Text, Image, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from 'react-native';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { formatJoinDate } from '../utils/format';
 
-// ❌ PropTypes au lieu de TypeScript
-// ❌ Composant classe
-// ❌ Logique metier + UI melanges
-// ❌ Appels API dans componentDidMount
-// ❌ Pas de hooks
-// ❌ Pas d'extraction de logique
+export interface UserProfileProps {
+  userId: string;
+  onError?: (error: Error) => void;
+}
 
-class UserProfile extends Component {
-  // ❌ PropTypes (pas TypeScript)
-  static propTypes = {
-    userId: PropTypes.string.isRequired,
-    onError: PropTypes.func,
-  };
+/**
+ * ✅ Composant fonctionnel pur, focalisé sur l'affichage.
+ *
+ * Refactor par rapport au legacy :
+ *   - Composant classe → fonctionnel + hooks
+ *   - PropTypes → interface TypeScript
+ *   - Fetch dans componentDidMount → useUserProfile (TanStack Query)
+ *   - setState callback hell → state local immutable + isLoading dérivé
+ *   - Logique métier (formatJoinDate) → extraite dans utils/format
+ *   - Posts de l'utilisateur → délégué à un sous-hook (useUserProfile.posts)
+ */
+export const UserProfile: React.FC<UserProfileProps> = ({ userId, onError }) => {
+  const { user, posts, isLoading, error, refetch } = useUserProfile(userId);
 
-  // ❌ any implicite
-  constructor(props) {
-    super(props);
-    this.state = {
-      user: null,
-      loading: true,
-      error: null,
-      // ❌ Etat duplique
-      posts: [],
-      postsLoading: false,
-      // ❌ Cache local fait main
-      lastFetch: null,
-    };
-  }
+  // ✅ Effet de bord propagation d'erreur — délégué au consumer (onError optionnel)
+  React.useEffect(() => {
+    if (error && onError) onError(error);
+  }, [error, onError]);
 
-  // ❌ Logique de fetch dans le component
-  componentDidMount() {
-    this.fetchUserData();
-  }
-
-  // ❌ componentDidUpdate pour re-fetch (pas de dependences claires)
-  componentDidUpdate(prevProps) {
-    if (prevProps.userId !== this.props.userId) {
-      this.fetchUserData();
-    }
-  }
-
-  // ❌ setState callback hell
-  fetchUserData() {
-    this.setState({ loading: true, error: null }, () => {
-      fetch('/api/user/' + this.props.userId)
-        .then((res) => {
-          if (!res.ok) throw new Error('Erreur chargement');
-          return res.json();
-        })
-        .then((data) => {
-          this.setState({ user: data, loading: false, lastFetch: Date.now() }, () => {
-            // ❌ Appel API imbrique
-            this.fetchUserPosts(data.id);
-          });
-        })
-        .catch((err) => {
-          this.setState({ error: err.message, loading: false }, () => {
-            if (this.props.onError) {
-              this.props.onError(err);
-            }
-          });
-        });
-    });
-  }
-
-  // ❌ Deuxieme methode de fetch separee
-  fetchUserPosts(userId) {
-    this.setState({ postsLoading: true }, () => {
-      fetch('/api/user/' + userId + '/posts')
-        .then((res) => res.json())
-        .then((data) => {
-          this.setState({ posts: data, postsLoading: false });
-        })
-        .catch(() => {
-          this.setState({ postsLoading: false });
-        });
-    });
-  }
-
-  // ❌ Logique metier dans le render (calcul inline)
-  formatJoinDate(dateStr) {
-    if (!dateStr) return 'Date inconnue';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-
-  render() {
-    const { user, loading, error, posts, postsLoading } = this.state;
-
-    if (loading) {
-      return (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#FF3000" />
-          <Text>Chargement du profil...</Text>
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View style={styles.center}>
-          <Text style={styles.error}>Erreur : {error}</Text>
-          <TouchableOpacity onPress={() => this.fetchUserData()}>
-            <Text style={styles.retry}>Reessayer</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    if (!user) return null;
-
-    // ❌ Tout est dans le meme render : profil + posts
+  if (isLoading) {
     return (
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Image source={{ uri: user.avatar }} style={styles.avatar} />
-          <View>
-            <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.email}>{user.email}</Text>
-            <Text style={styles.joinDate}>
-              Membre depuis {this.formatJoinDate(user.createdAt)}
-            </Text>
-          </View>
-        </View>
-
-        {/* Bio */}
-        <Text style={styles.bio}>{user.bio}</Text>
-
-        {/* Posts */}
-        <Text style={styles.sectionTitle}>
-          Articles ({posts.length})
-        </Text>
-        {postsLoading ? (
-          <ActivityIndicator />
-        ) : (
-          posts.map((post) => (
-            <View key={post.id} style={styles.postCard}>
-              <Text style={styles.postTitle}>{post.title}</Text>
-              <Text style={styles.postExcerpt}>{post.excerpt}</Text>
-            </View>
-          ))
-        )}
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#FF3000" />
+        <Text>Chargement du profil…</Text>
       </View>
     );
   }
-}
 
-// ❌ Pas de theme, couleurs en dur
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.error}>Erreur : {error.message}</Text>
+        <TouchableOpacity onPress={refetch} accessibilityRole="button">
+          <Text style={styles.retry}>Réessayer</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!user) return null;
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Image source={{ uri: user.avatar }} style={styles.avatar} />
+        <View>
+          <Text style={styles.name}>{user.name}</Text>
+          <Text style={styles.email}>{user.email}</Text>
+          <Text style={styles.joinDate}>
+            Membre depuis {formatJoinDate(user.createdAt)}
+          </Text>
+        </View>
+      </View>
+
+      <Text style={styles.bio}>{user.bio}</Text>
+
+      <Text style={styles.sectionTitle}>Articles ({posts.length})</Text>
+      {posts.map((post) => (
+        <View key={post.id} style={styles.postCard}>
+          <Text style={styles.postTitle}>{post.title}</Text>
+          <Text style={styles.postExcerpt}>{post.excerpt}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
   container: { padding: 16 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  avatar: { width: 64, height: 64, borderRadius: 32, marginRight: 12, backgroundColor: '#eee' },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginRight: 12,
+    backgroundColor: '#eee',
+  },
   name: { fontSize: 20, fontWeight: '700' },
   email: { fontSize: 14, color: '#666', marginTop: 2 },
   joinDate: { fontSize: 12, color: '#999', marginTop: 2 },
