@@ -22,7 +22,15 @@ et corriger les usages dépréciés.
 
 ## Étapes
 
-1. **Auditer** : `npx react-native-new-architecture-helper`
+1. **Auditer** (il n'existe pas de CLI officiel — procédure manuelle) :
+   - Vérifier chaque dépendance native sur https://reactnative.directory (filtre **"Supports the New Architecture"**)
+   - Lister les modules autolinkés : `npx react-native config`
+   - Grep les APIs incompatibles Fabric :
+     ```bash
+     grep -rn "findNodeHandle\|UIManager.dispatchViewManagerCommand\|UIManager.measure" src/
+     grep -rn "NativeModules\." src/
+     ```
+   - Diagnostic général : `npx @react-native-community/cli doctor`
 2. **Activer Hermes** : `Podfile` + `gradle.properties`
 3. **Activer New Arch** : `newArchEnabled=true`
 4. **Corriger** les usages dépréciés

@@ -1,7 +1,13 @@
 # MIGRATION_NOTES.md — Corrigé TP-01
 # ==========================================
 
-## Audit initial (via react-native-new-architecture-helper)
+## Audit initial
+
+Procédure (il n'existe pas de CLI officiel pour l'audit New Arch) :
+- Vérification des libs sur https://reactnative.directory (filtre "Supports the New Architecture")
+- `npx react-native config` pour lister les modules autolinkés
+- `grep` des APIs incompatibles (`findNodeHandle`, `UIManager.dispatchViewManagerCommand`, `NativeModules.*`)
+- `npx @react-native-community/cli doctor` pour le diagnostic général
 
 ### Dépendances incompatibles
 - `react-native-camera@3.44.0` ❌ Pas compatible New Architecture
