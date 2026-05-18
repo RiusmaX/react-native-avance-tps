@@ -74,6 +74,7 @@ const UserList: React.FC = () => {
           offset: ITEM_HEIGHT * index,
           index,
         })}
+        onContentSizeChange={handleContentSizeChange}
       />
     </View>
   );
