@@ -8,7 +8,7 @@
 ## Contexte
 
 App utilisant **React Navigation v6** (Stack + Bottom Tabs + guard d'auth).
-À migrer vers **Expo Router v3** (file-based routing).
+À migrer vers **Expo Router v4** (file-based routing, version shipée avec Expo SDK 55).
 
 ## Architecture de départ
 
@@ -39,15 +39,26 @@ app/
 
 | Étape | Durée | Action |
 |-------|-------|--------|
-| 1 | 3 min | Installer `expo-router`, créer `app/`, configurer `scheme` |
+| 1 | 3 min | Installer `expo-router@~4.0.0`, `expo-linking@~7.0.0`, `react-native-gesture-handler@~2.16.0` ; changer `package.json#main` en `"expo-router/entry"` ; ajouter `"plugins": ["expo-router"]` dans `app.json` |
 | 2 | 3 min | Créer `app/_layout.tsx` (Stack) |
 | 3 | 10 min | Créer `app/(tabs)/_layout.tsx` + fichiers écrans |
 | 4 | 5 min | Route dynamique `app/product/[id].tsx` |
 | 5 | 4 min | Guard auth : `useSegments` + `Redirect` |
 
-## Points clés
+## Mappings React Navigation → Expo Router
 
-- `useLocalSearchParams` → `route.params`
-- `router.push`, `router.replace` → `navigation.navigate`
-- `useSegments` + `Redirect` → `AuthGuard` legacy
-- Deep link fonctionnel : `npx uri-scheme open rnadv-tp07://product/123`
+| React Navigation v6 (départ) | Expo Router v4 (arrivée) |
+|------------------------------|---------------------------|
+| `route.params.productId` | `useLocalSearchParams<{ id: string }>()` |
+| `navigation.navigate('Login')` | `router.push('/login')` |
+| `<AuthGuard>` (composant englobant) | `useSegments()` + `<Redirect />` dans `_layout.tsx` |
+
+## Deep link de test
+
+```bash
+# Android (depuis Windows : nécessite un émulateur en cours)
+npx uri-scheme open rnadv-tp07://product/123 --android
+
+# iOS (macOS uniquement)
+npx uri-scheme open rnadv-tp07://product/123 --ios
+```
