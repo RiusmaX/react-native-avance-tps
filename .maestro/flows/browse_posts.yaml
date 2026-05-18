@@ -1,6 +1,6 @@
 appId: com.sparks.rnadvanced.tp04
 ---
 - launchApp
-- assertVisible: "Posts"
+- assertVisible: "Articles"
 - scroll
 - assertVisible: "Second post avec du contenu"

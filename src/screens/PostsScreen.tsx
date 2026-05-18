@@ -10,7 +10,7 @@ export default function PostsScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#FF3000" />
-        <Text style={styles.loadingText}>Chargement des posts…</Text>
+        <Text style={styles.loadingText}>Chargement des articles...</Text>
       </View>
     );
   }

@@ -57,6 +57,6 @@ describe('PostsScreen', () => {
 
     renderWithProviders(<PostsScreen />);
 
-    expect(screen.getByText('Chargement des posts…')).toBeTruthy();
+    expect(screen.getByText('Chargement des articles...')).toBeTruthy();
   });
 });
