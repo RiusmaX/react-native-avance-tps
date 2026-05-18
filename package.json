@@ -2,5 +2,18 @@
   "name": "rn-advanced-tp-05",
   "version": "1.0.0",
   "private": true,
-  "description": "TP-05 : Refactoring agentique - composant classe legacy"
+  "description": "TP-05 : Refactoring agentique - composant classe legacy",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "prop-types": "^15.8.1"
+  },
+  "devDependencies": {
+    "@types/react": "~18.2.45",
+    "@types/prop-types": "^15.7.0",
+    "typescript": "^5.4.0"
+  }
 }
