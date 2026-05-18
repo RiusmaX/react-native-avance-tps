@@ -15,6 +15,7 @@ interface UserRow {
   name: string;
   email: string;
   avatar: string | null;
+  created_at: string;
 }
 
 function mapPost(row: PostRow) {
@@ -35,6 +36,7 @@ function mapUser(row: UserRow) {
     name: row.name,
     email: row.email,
     avatar: row.avatar,
+    createdAt: row.created_at,
   };
 }
 
