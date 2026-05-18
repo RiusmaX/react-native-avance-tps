@@ -1,11 +1,27 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Platform } from 'react-native';
 
-// Types
+// Endpoint backend GraphQL (cf. 03-backend-graphql/).
+// MSW intercepte ces requêtes en environnement de test.
+const HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+const ENDPOINT = `http://${HOST}:4000/graphql`;
+
+const GET_POSTS_QUERY = `query GetPosts {
+  posts {
+    id
+    title
+    excerpt
+    author { id name avatar }
+    tags
+    createdAt
+  }
+}`;
+
 interface Post {
   id: string;
   title: string;
   excerpt: string;
-  author: { name: string; avatar?: string };
+  author: { id: string; name: string; avatar?: string | null };
   tags: string[];
   createdAt: string;
 }
@@ -22,70 +38,50 @@ interface UsePostsResult {
   isRefetching: boolean;
 }
 
-// Données mockées
-const MOCK_POSTS: Post[] = Array.from({ length: 50 }, (_, i) => ({
-  id: `post-${i + 1}`,
-  title: `Article de démonstration n°${i + 1}`,
-  excerpt: `Ceci est l'extrait de l'article ${i + 1}...`,
-  author: { name: `Auteur ${(i % 10) + 1}` },
-  tags: [`tag${(i % 5) + 1}`, `tag${(i % 3) + 6}`],
-  createdAt: new Date(Date.now() - i * 3600000).toISOString(),
-}));
-
-const PAGE_SIZE = 10;
-
-export function usePosts(): UsePostsResult {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [page, setPage] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
-  const [isRefetching, setIsRefetching] = useState(false);
-
-  const hasNextPage = (page + 1) * PAGE_SIZE < MOCK_POSTS.length;
-
-  // Simulation de chargement initial
-  useState(() => {
-    setTimeout(() => {
-      setPosts(MOCK_POSTS.slice(0, PAGE_SIZE));
-      setIsLoading(false);
-      setPage(0);
-    }, 800);
+async function fetchPosts(): Promise<Post[]> {
+  const res = await fetch(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: GET_POSTS_QUERY,
+      operationName: 'GetPosts',
+    }),
   });
 
-  const fetchNextPage = useCallback(() => {
-    if (isFetchingNextPage || !hasNextPage) return;
-    setIsFetchingNextPage(true);
-    setTimeout(() => {
-      const nextPage = page + 1;
-      const start = nextPage * PAGE_SIZE;
-      const end = start + PAGE_SIZE;
-      setPosts((prev) => [...prev, ...MOCK_POSTS.slice(start, end)]);
-      setPage(nextPage);
-      setIsFetchingNextPage(false);
-    }, 600);
-  }, [page, hasNextPage, isFetchingNextPage]);
+  if (!res.ok) {
+    throw new Error(`Erreur ${res.status}`);
+  }
 
-  const refetch = useCallback(() => {
-    setIsRefetching(true);
-    setTimeout(() => {
-      setPosts(MOCK_POSTS.slice(0, PAGE_SIZE));
-      setPage(0);
-      setIsRefetching(false);
-    }, 800);
-  }, []);
+  const json = (await res.json()) as {
+    data?: { posts: Post[] };
+    errors?: Array<{ message: string }>;
+  };
+
+  if (json.errors && json.errors.length > 0) {
+    throw new Error(json.errors[0]?.message ?? 'Erreur GraphQL');
+  }
+
+  return json.data?.posts ?? [];
+}
+
+export function usePosts(): UsePostsResult {
+  const q = useQuery({
+    queryKey: ['posts'],
+    queryFn: fetchPosts,
+  });
 
   return {
-    posts,
-    isLoading,
-    isError,
-    error,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-    refetch,
-    isRefetching,
+    posts: q.data ?? [],
+    isLoading: q.isLoading,
+    isError: q.isError,
+    error: (q.error as Error | null) ?? null,
+    isFetchingNextPage: false,
+    hasNextPage: false,
+    fetchNextPage: () => {},
+    refetch: () => {
+      void q.refetch();
+    },
+    isRefetching: q.isRefetching,
   };
 }
 
