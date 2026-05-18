@@ -52,6 +52,18 @@ npm install
 npx expo start
 ```
 
+> ⚠️ **URL du backend selon la plateforme** — le starter a `http://localhost:4000/graphql`
+> dans `src/data/graphql/client.ts`. Selon où tourne l'app :
+>
+> | Plateforme | URL à utiliser |
+> |------------|----------------|
+> | iOS Simulator | `http://localhost:4000/graphql` |
+> | Android Emulator | `http://10.0.2.2:4000/graphql` |
+> | Device physique (Wi-Fi) | `http://<IP-locale-du-PC>:4000/graphql` |
+>
+> Le plus simple : utiliser `Platform.OS === 'android' ? '10.0.2.2' : 'localhost'`
+> directement dans `client.ts`.
+
 ## Étapes
 
 | # | Tâche | Fichier | Durée |
