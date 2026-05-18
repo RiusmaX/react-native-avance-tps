@@ -25,6 +25,10 @@
 
 ```bash
 npm install
-npx expo start --dev-client
-npx react-devtools  # Profiler
+npx expo start              # Expo Go suffit, pas besoin de dev-client ici
+npx react-devtools          # Profiler (s'installe au premier lancement via npx)
 ```
+
+> 💡 `npx react-devtools` télécharge l'app au premier appel. Pour l'avoir
+> pré-installé : `npm install -g react-devtools`. À lancer AVANT
+> `expo start` pour qu'il se branche automatiquement.
